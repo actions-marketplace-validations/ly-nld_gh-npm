@@ -1,5 +1,5 @@
-name: gh-npm
-description: Multi-publish to both GitHub and NPM Package registry
+name: 'gh-npm'
+description: 'Multi-publish to both GitHub and NPM Package registry'
 branding:
   icon: package
   color: purple
@@ -7,46 +7,38 @@ branding:
 inputs:
   node_version:
     description: 'Node.js version'
-    default: '12'
-
+    required: true
   npm_scope:
     description: 'NPM scope'
     required: true
-
   github_scope:
     description: 'GitHub scope'
     required: true
 
 runs:
   using: 'composite'
-  shell: bash  # Specify the shell to be used in the run steps
   steps:
     - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node_version }}
       shell: bash
-      run: actions/checkout@v4
 
     - name: NPM Publish
+      run: |
+        npm ci
+        npm publish --access public
       shell: bash
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node_version }}
-        registry-url: 'https://registry.npmjs.org'
-        scope: ${{ inputs.npm_scope }}
       env:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
-      run: |
-        npm ci
-        npm publish
 
     - name: GitHub Publish
-      shell: bash
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node_version }}
-        registry-url: 'https://npm.pkg.github.com'
-        scope: ${{ inputs.github_scope }}
-      env:
-        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         npm ci
-        npm publish
+        npm publish --access public
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
